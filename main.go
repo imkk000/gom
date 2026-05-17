@@ -11,8 +11,9 @@ import (
 
 func main() {
 	app := &cli.Command{
-		Name:  "gom",
-		Usage: "Go package manager",
+		Name:                  "gom",
+		Usage:                 "Go package manager",
+		EnableShellCompletion: true,
 		Commands: []*cli.Command{
 			cmd.Install(),
 			cmd.Uninstall(),
