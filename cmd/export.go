@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"sort"
 
 	"github.com/imkk000/gom/internal/bin"
 	"github.com/imkk000/gom/internal/store"
@@ -14,7 +13,7 @@ import (
 func Export() *cli.Command {
 	return &cli.Command{
 		Name:  "export",
-		Usage: "scan GOPATH/bin and write all Go packages into packages.json",
+		Usage: "scan GOPATH/bin and write all Go packages with their installed versions into packages.json",
 		Action: func(_ context.Context, _ *cli.Command) error {
 			current, err := store.Load()
 			if err != nil {
@@ -25,10 +24,14 @@ func Export() *cli.Command {
 				return err
 			}
 			next := make([]string, 0, len(installed))
-			for pkg := range installed {
-				next = append(next, pkg)
+			for path, b := range installed {
+				var version string
+				if b.Pinnable() {
+					version = b.Version
+				}
+				next = append(next, store.Join(path, version))
 			}
-			sort.Strings(next)
+			slices.Sort(next)
 
 			added, removed := diff(current, next)
 			for _, p := range added {

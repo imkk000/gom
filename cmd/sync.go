@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"slices"
 
 	"github.com/imkk000/gom/internal/bin"
 	"github.com/imkk000/gom/internal/exec"
@@ -16,7 +15,8 @@ func Sync() *cli.Command {
 	return &cli.Command{
 		Name:  "sync",
 		Usage: "mirror packages.json: install missing and remove extras",
-		Action: func(ctx context.Context, _ *cli.Command) error {
+		Flags: []cli.Flag{jobsFlag()},
+		Action: func(ctx context.Context, cmd *cli.Command) error {
 			pkgs, err := store.Load()
 			if err != nil {
 				return err
@@ -25,25 +25,32 @@ func Sync() *cli.Command {
 			if err != nil {
 				return err
 			}
+			wanted := make(map[string]struct{}, len(pkgs))
+			var pending []string
 			for _, p := range pkgs {
-				if _, ok := installed[p]; ok {
+				path, version := store.Split(p)
+				wanted[path] = struct{}{}
+				if b, ok := installed[path]; ok && (version == "" || version == b.Version) {
 					continue
 				}
-				if err := exec.InstallLatest(ctx, p); err != nil {
+				pending = append(pending, p)
+			}
+			parallel(ctx, cmd.Int("jobs"), pending, func(ctx context.Context, p string) {
+				if err := exec.Install(ctx, p); err != nil {
 					fmt.Printf("[%s] failed: %v\n", p, err)
-					continue
+					return
 				}
 				fmt.Printf("[%s] installed\n", p)
-			}
-			for pkg, path := range installed {
-				if slices.Contains(pkgs, pkg) {
+			})
+			for path, b := range installed {
+				if _, ok := wanted[path]; ok {
 					continue
 				}
-				if err := os.Remove(path); err != nil {
-					fmt.Printf("[%s] failed: %v\n", pkg, err)
+				if err := os.Remove(b.File); err != nil {
+					fmt.Printf("[%s] failed: %v\n", path, err)
 					continue
 				}
-				fmt.Printf("[%s] removed\n", pkg)
+				fmt.Printf("[%s] removed\n", path)
 			}
 			return nil
 		},

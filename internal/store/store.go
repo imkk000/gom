@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 )
 
 func Path() (string, error) {
@@ -97,28 +98,46 @@ func Save(pkgs []string) error {
 	return nil
 }
 
-func Add(pkg string) error {
+func Split(entry string) (path, version string) {
+	path, version, _ = strings.Cut(entry, "@")
+	if version == "latest" {
+		version = ""
+	}
+	return path, version
+}
+
+func Join(path, version string) string {
+	if version == "" {
+		return path
+	}
+	return path + "@" + version
+}
+
+func samePath(path string) func(string) bool {
+	return func(entry string) bool {
+		p, _ := Split(entry)
+		return p == path
+	}
+}
+
+func Add(entry string) error {
 	pkgs, err := Load()
 	if err != nil {
 		return err
 	}
-	if slices.Contains(pkgs, pkg) {
+	if slices.Contains(pkgs, entry) {
 		return nil
 	}
-	pkgs = append(pkgs, pkg)
+	path, _ := Split(entry)
+	pkgs = slices.DeleteFunc(pkgs, samePath(path))
+	pkgs = append(pkgs, entry)
 	return Save(pkgs)
 }
 
-func Remove(pkg string) error {
+func Remove(path string) error {
 	pkgs, err := Load()
 	if err != nil {
 		return err
 	}
-	filtered := make([]string, 0, len(pkgs))
-	for _, p := range pkgs {
-		if p != pkg {
-			filtered = append(filtered, p)
-		}
-	}
-	return Save(filtered)
+	return Save(slices.DeleteFunc(pkgs, samePath(path)))
 }

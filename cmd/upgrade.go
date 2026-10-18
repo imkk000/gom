@@ -12,19 +12,25 @@ import (
 func Upgrade() *cli.Command {
 	return &cli.Command{
 		Name:  "upgrade",
-		Usage: "reinstall all packages at @latest",
-		Action: func(ctx context.Context, _ *cli.Command) error {
+		Usage: "reinstall all packages at @latest without updating packages.json",
+		Flags: []cli.Flag{jobsFlag()},
+		Action: func(ctx context.Context, cmd *cli.Command) error {
 			pkgs, err := store.Load()
 			if err != nil {
 				return err
 			}
+			pending := make([]string, 0, len(pkgs))
 			for _, p := range pkgs {
-				if err := exec.InstallLatest(ctx, p); err != nil {
+				path, _ := store.Split(p)
+				pending = append(pending, path)
+			}
+			parallel(ctx, cmd.Int("jobs"), pending, func(ctx context.Context, p string) {
+				if err := exec.Install(ctx, p); err != nil {
 					fmt.Printf("[%s] failed: %v\n", p, err)
-					continue
+					return
 				}
 				fmt.Printf("[%s] done\n", p)
-			}
+			})
 			return nil
 		},
 	}

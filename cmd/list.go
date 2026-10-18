@@ -13,7 +13,7 @@ func List() *cli.Command {
 	return &cli.Command{
 		Name:  "list",
 		Usage: "list packages with install status",
-		Action: func(ctx context.Context, _ *cli.Command) error {
+		Action: func(_ context.Context, _ *cli.Command) error {
 			pkgs, err := store.Load()
 			if err != nil {
 				return err
@@ -23,11 +23,16 @@ func List() *cli.Command {
 				return err
 			}
 			for _, p := range pkgs {
-				status := "missing"
-				if _, ok := installed[p]; ok {
-					status = "ok"
+				path, version := store.Split(p)
+				b, ok := installed[path]
+				switch {
+				case !ok:
+					fmt.Printf("[missing] %s\n", p)
+				case version != "" && version != b.Version:
+					fmt.Printf("[mismatch] %s (installed %s)\n", p, b.Version)
+				default:
+					fmt.Printf("[ok] %s\n", p)
 				}
-				fmt.Printf("[%s] %s\n", status, p)
 			}
 			return nil
 		},

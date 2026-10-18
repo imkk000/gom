@@ -36,7 +36,16 @@ func GopathBin() (string, error) {
 	return filepath.Join(home, "go", "bin"), nil
 }
 
-func Installed() (map[string]string, error) {
+type Binary struct {
+	File    string
+	Version string
+}
+
+func (b Binary) Pinnable() bool {
+	return b.Version != "" && b.Version != "(devel)" && !strings.Contains(b.Version, "+dirty")
+}
+
+func Installed() (map[string]Binary, error) {
 	dir, err := GopathBin()
 	if err != nil {
 		return nil, err
@@ -44,11 +53,11 @@ func Installed() (map[string]string, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			return map[string]string{}, nil
+			return make(map[string]Binary), nil
 		}
 		return nil, err
 	}
-	result := make(map[string]string)
+	result := make(map[string]Binary)
 	for _, e := range entries {
 		if e.IsDir() {
 			continue
@@ -65,20 +74,16 @@ func Installed() (map[string]string, error) {
 		if path == "" || path == "command-line-arguments" {
 			continue
 		}
-		result[path] = full
+		result[path] = Binary{File: full, Version: info.Main.Version}
 	}
 	return result, nil
 }
 
-func Lookup(pkg string) (string, error) {
+func Lookup(pkg string) (Binary, error) {
 	base, _, _ := strings.Cut(strings.TrimSuffix(pkg, "/..."), "@")
 	installed, err := Installed()
 	if err != nil {
-		return "", err
+		return Binary{}, err
 	}
-	path, ok := installed[base]
-	if !ok {
-		return "", nil
-	}
-	return path, nil
+	return installed[base], nil
 }
