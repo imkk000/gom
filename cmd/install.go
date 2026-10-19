@@ -21,8 +21,17 @@ func Install() *cli.Command {
 			if pkg == "" {
 				return errors.New("package argument required")
 			}
-			path, _ := store.Split(pkg)
-			if err := exec.Install(ctx, pkg); err != nil {
+			path, err := resolvePath(ctx, pkg)
+			if err != nil {
+				fmt.Printf("[%s] failed: %v\n", pkg, err)
+				return err
+			}
+			old, err := bin.Lookup(path)
+			if err != nil {
+				fmt.Printf("[%s] failed: %v\n", path, err)
+				return err
+			}
+			if err := reinstall(ctx, pkg, old.File); err != nil {
 				fmt.Printf("[%s] failed: %v\n", path, err)
 				return err
 			}
@@ -43,4 +52,12 @@ func Install() *cli.Command {
 			return nil
 		},
 	}
+}
+
+func resolvePath(ctx context.Context, pkg string) (string, error) {
+	if exec.IsLocal(pkg) {
+		return exec.ImportPath(ctx, pkg)
+	}
+	path, _ := store.Split(pkg)
+	return path, nil
 }

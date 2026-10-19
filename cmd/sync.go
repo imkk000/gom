@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/imkk000/gom/internal/bin"
-	"github.com/imkk000/gom/internal/exec"
 	"github.com/imkk000/gom/internal/store"
 	"github.com/urfave/cli/v3"
 )
@@ -36,7 +35,8 @@ func Sync() *cli.Command {
 				pending = append(pending, p)
 			}
 			parallel(ctx, cmd.Int("jobs"), pending, func(ctx context.Context, p string) {
-				if err := exec.Install(ctx, p); err != nil {
+				path, _ := store.Split(p)
+				if err := reinstall(ctx, p, installed[path].File); err != nil {
 					fmt.Printf("[%s] failed: %v\n", p, err)
 					return
 				}

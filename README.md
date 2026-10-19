@@ -12,6 +12,7 @@ go install github.com/imkk000/gom@latest
 
 ```sh
 gom install <pkg>[@version]  Install a package and record it with its installed version
+gom install .                Install the package in the current directory (any local path works)
 gom uninstall <pkg>          Remove a package binary and record
 gom list                     List packages with install status
 gom sync [-j N]              Mirror packages.json: install missing or mismatched versions, remove extras
@@ -26,6 +27,10 @@ gom export                   Scan GOPATH/bin and write all Go packages with vers
 Binaries built from a local checkout (`(devel)` or `+dirty`) are recorded without a version and track `@latest`.
 
 Every install runs `go install -trimpath -ldflags="-s -w"`.
+
+`gom install` always writes a fresh binary. Plain `go install` skips writing when the existing binary is up to date, so `gom` moves the existing binary aside first, then deletes it on success or restores it if the install fails.
+
+Local paths (`.`, `./cmd/foo`, absolute paths) are resolved to their import path with `go list` and recorded under that path.
 
 ## Packages file
 
