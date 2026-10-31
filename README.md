@@ -24,6 +24,8 @@ gom export                   Scan GOPATH/bin and write all Go packages with vers
 
 `packages.json` is the source of truth for `sync`. After `upgrade`, run `export` to record the new versions; running `sync` first reinstalls the recorded versions, which is a downgrade. `list` shows such packages as `[mismatch]`.
 
+`list` and `export` print the commit time (UTC) after pseudo-versions, e.g. `v0.0.0-20261031160137-abcdef123456 (2026-10-31 16:01:37)`, so you can tell which build is newer. `packages.json` keeps the raw version.
+
 Binaries built from a local checkout (`(devel)` or `+dirty`) are recorded without a version and track `@latest`.
 
 Every install runs `go install -trimpath -ldflags="-s -w"`.

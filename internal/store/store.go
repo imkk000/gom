@@ -8,6 +8,9 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
+
+	"golang.org/x/mod/module"
 )
 
 func Path() (string, error) {
@@ -111,6 +114,22 @@ func Join(path, version string) string {
 		return path
 	}
 	return path + "@" + version
+}
+
+func Pretty(version string) string {
+	if !module.IsPseudoVersion(version) {
+		return version
+	}
+	t, err := module.PseudoVersionTime(version)
+	if err != nil {
+		return version
+	}
+	return version + " (" + t.UTC().Format(time.DateTime) + ")"
+}
+
+func Display(entry string) string {
+	path, version := Split(entry)
+	return Join(path, Pretty(version))
 }
 
 func samePath(path string) func(string) bool {

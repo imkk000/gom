@@ -35,10 +35,10 @@ func Export() *cli.Command {
 
 			added, removed := diff(current, next)
 			for _, p := range added {
-				fmt.Printf("[+] %s\n", p)
+				fmt.Printf("[+] %s\n", store.Display(p))
 			}
 			for _, p := range removed {
-				fmt.Printf("[-] %s\n", p)
+				fmt.Printf("[-] %s\n", store.Display(p))
 			}
 			if len(added) == 0 && len(removed) == 0 {
 				fmt.Println("no changes")

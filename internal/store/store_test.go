@@ -66,6 +66,20 @@ func TestSplit(t *testing.T) {
 	}
 }
 
+func TestDisplay(t *testing.T) {
+	cases := []struct{ in, want string }{
+		{"github.com/a/b", "github.com/a/b"},
+		{"github.com/a/b@v1.2.3", "github.com/a/b@v1.2.3"},
+		{"github.com/a/b@v0.0.0-20261031160137-abcdef123456", "github.com/a/b@v0.0.0-20261031160137-abcdef123456 (2026-10-31 16:01:37)"},
+		{"github.com/a/b@v1.2.4-0.20261031160137-abcdef123456", "github.com/a/b@v1.2.4-0.20261031160137-abcdef123456 (2026-10-31 16:01:37)"},
+	}
+	for _, c := range cases {
+		if got := store.Display(c.in); got != c.want {
+			t.Errorf("Display(%q) = %q; want %q", c.in, got, c.want)
+		}
+	}
+}
+
 func TestAddReplacesPinAndRemoveDropsIt(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	for _, e := range []string{"github.com/a/b@v1.0.0", "github.com/c/d", "github.com/a/b@v2.0.0"} {

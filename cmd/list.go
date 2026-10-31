@@ -27,11 +27,11 @@ func List() *cli.Command {
 				b, ok := installed[path]
 				switch {
 				case !ok:
-					fmt.Printf("[missing] %s\n", p)
+					fmt.Printf("[missing] %s\n", store.Display(p))
 				case version != "" && version != b.Version:
-					fmt.Printf("[mismatch] %s (installed %s)\n", p, b.Version)
+					fmt.Printf("[mismatch] %s (installed %s)\n", store.Display(p), store.Pretty(b.Version))
 				default:
-					fmt.Printf("[ok] %s\n", p)
+					fmt.Printf("[ok] %s\n", store.Display(p))
 				}
 			}
 			return nil
