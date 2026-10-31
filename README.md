@@ -16,7 +16,7 @@ gom install .                Install the package in the current directory (any l
 gom uninstall <pkg>          Remove a package binary and record
 gom list                     List packages with install status
 gom sync [-j N]              Mirror packages.json: install missing or mismatched versions, remove extras
-gom upgrade [-j N]           Reinstall all packages at @latest (packages.json is not updated)
+gom upgrade [-j N] [name...] Reinstall packages at @latest, all if none given (packages.json is not updated)
 gom export                   Scan GOPATH/bin and write all Go packages with versions into packages.json (with diff)
 ```
 
